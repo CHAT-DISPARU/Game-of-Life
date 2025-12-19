@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   draw_points.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gajanvie <gajanvie@student.42.fr>          +#+  +:+       +#+        */
+/*   By: titan <titan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 15:37:09 by gajanvie          #+#    #+#             */
-/*   Updated: 2025/12/19 17:34:15 by gajanvie         ###   ########.fr       */
+/*   Updated: 2025/12/19 18:30:05 by titan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ void	draw_every_point(t_data *data)
 		x_map = 0;
 		while (x_map < data->map.width)
 		{
-			if (data->map.grid[y_map][x_map] == 1)
+			if (get_bit(data, y_map, x_map) == 1)
 				color = 0xFFFFFFFF;
 			else
 				color = 0x000000FF;
@@ -81,7 +81,7 @@ int	count_neighbors(t_data *data, int y, int x)
 			if (row >= 0 && row < data->map.height && 
 				col >= 0 && col < data->map.width)
 			{
-				if (data->map.grid[row][col] == 1)
+				if (get_bit(data, row, col) == 1)
 					count++;
 			}
 			j++;
@@ -93,10 +93,11 @@ int	count_neighbors(t_data *data, int y, int x)
 
 void	calculate_next_gen(t_data *data)
 {
-	int	y;
-	int	x;
-	int	autour;
-	int	**tmp;
+	int				y;
+	int				x;
+	int				autour;
+	unsigned char	**tmp;
+	int				state;
 
 	y = 0;
 	while (y < data->map.height)
@@ -105,12 +106,13 @@ void	calculate_next_gen(t_data *data)
 		while (x < data->map.width)
 		{
 			autour = count_neighbors(data, y, x);
-			if (data->map.grid[y][x] == 0 && autour == 3)
-				data->map.next_grid[y][x] = 1;
-			else if (data->map.grid[y][x] == 1 && (autour < 2 || autour > 3))
-				data->map.next_grid[y][x] = 0;
+			state = get_bit(data, y, x);
+			if (state == 0 && autour == 3)
+				set_bit(data->map.next_grid, y, x, 1);
+			else if (state == 1 && (autour < 2 || autour > 3))
+				set_bit(data->map.next_grid, y, x, 0);
 			else
-				data->map.next_grid[y][x] = data->map.grid[y][x];
+				set_bit(data->map.next_grid, y, x, state);
 
 			x++;
 		}
