@@ -1,0 +1,229 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   jdlv.c                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: gajanvie <gajanvie@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/11/13 10:47:21 by gajanvie          #+#    #+#             */
+/*   Updated: 2025/12/19 17:39:35 by gajanvie         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include <jdlv.h>
+
+void	create_window(t_data *data, mlx_window_create_info	*info)
+{
+	info->title = "Game Of Life";
+	info->width = WIDTH;
+	info->height = HEIGHT;
+	data->mlx = mlx_init();
+	data->win = mlx_new_window(data->mlx, info);
+	data->img.img = mlx_new_image(data->mlx, WIDTH, HEIGHT);
+	data->speed = 5;
+	data->timer = 0;
+	data->img.pixel_scale = SCALE;
+	data->is_paused = -1;
+	data->tor = -1;
+	ft_memset(data->key_table, 0, sizeof(data->key_table));
+}
+
+int	is_valid_line(char *line)
+{
+	int	i;
+
+	i = 0;
+	while (line[i] && line[i] != '\n')
+	{
+		if (line[i] != '0' && line[i] != '1')
+			return (0);
+		i++;
+	}
+	return (1);
+}
+
+int parse_map(char *filename, t_data *data)
+{
+    int     fd;
+    char    *line;
+    int     file_width;
+    int     file_height;
+    int     offset_x; 
+    int     offset_y;
+    int     i, j;
+
+    fd = open(filename, O_RDONLY);
+    if (fd < 0)
+		return (0);
+    line = get_next_line(fd, 0);
+    if (!line)
+	{
+		close(fd);
+		return (0);
+	}
+    file_width = ft_strlen(line);
+    if (line[file_width - 1] == '\n')
+		file_width--;
+    file_height = 0;
+    while (line)
+    {
+        int current_len = ft_strlen(line);
+        if (line[current_len - 1] == '\n')
+			current_len--;
+        if (current_len != file_width || !is_valid_line(line))
+        {
+            free(line);
+			get_next_line(fd, 1);
+			close(fd);
+			return (0);
+        }
+        file_height++;
+        free(line);
+        line = get_next_line(fd, 0);
+    }
+    close(fd);
+    data->map.width = WIDTH / SCALE;
+    data->map.height = HEIGHT / SCALE;
+    if (file_width > data->map.width || file_height > data->map.height)
+    {
+        ft_printf("Erreur : La map du fichier est plus grande que l'écran !\n");
+        return (0);
+    }
+    data->map.grid = malloc(data->map.height * sizeof(int *));
+    data->map.next_grid = malloc(data->map.height * sizeof(int *));
+    i = 0;
+    while (i < data->map.height)
+    {
+        data->map.grid[i] = ft_calloc(data->map.width, sizeof(int));
+        data->map.next_grid[i] = ft_calloc(data->map.width, sizeof(int));
+        i++;
+    }
+    offset_x = (data->map.width - file_width) / 2;
+    offset_y = (data->map.height - file_height) / 2;
+    fd = open(filename, O_RDONLY);
+    line = get_next_line(fd, 0);
+    j = 0;
+    while (line && j < file_height)
+    {
+        i = 0;
+        while (i < file_width)
+        {
+            if (line[i] == '1')
+                data->map.grid[j + offset_y][i + offset_x] = 1;
+            i++;
+        }
+        free(line);
+        line = get_next_line(fd, 0);
+        j++;
+    }
+    close(fd);
+    return (1);
+}
+
+void free_struct(t_data *data, int j)
+{
+	int i = 0;
+	while (i < data->map.height)
+	{
+		free(data->map.grid[i]);
+		free(data->map.next_grid[i]);
+		i++;
+	}
+	free(data->map.grid);
+	free(data->map.next_grid);
+	if (j)
+	{
+		mlx_destroy_image(data->mlx, data->img.img);
+		mlx_destroy_window(data->mlx, data->win);
+		mlx_destroy_context(data->mlx);
+	}
+	free(data);
+}
+
+void	key_hook(int key, void *param)
+{
+	if (key == 41)
+		mlx_loop_end((mlx_context)param);
+}
+
+void	key_up(int key, void *param)
+{
+	t_data	*data;
+
+	data = (t_data *)param;
+	printf("%d\n", key);
+	data->key_table[key] = 0;
+}
+
+void	key_down(int key, void *param)
+{
+	t_data	*data;
+
+	data = (t_data *)param;
+	data->key_table[key] = 1;
+}
+
+void	window_hook(int event, void *param)
+{
+	if (event == 0)
+		mlx_loop_end((mlx_context)param);
+}
+
+void	update(void *param)
+{
+	t_data	*data;
+
+	data = (t_data *)param;
+	if (data->key_table[87] == 1 && data->speed > 1)
+		data->speed--;
+	if (data->key_table[86] == 1)
+		data->speed++;
+	if (data->key_table[44] == 1 && data->old_key_table[44] != 1)
+		data->is_paused = -data->is_paused;
+	if (data->key_table[23] == 1 && data->old_key_table[23] != 1)
+		data->tor = -data->tor;
+	if (data->is_paused > 0)
+	{
+		data->timer++;
+		if (data->timer >= data->speed)
+		{
+			calculate_next_gen(data); 
+			data->timer = 0;
+		}
+	}
+	mlx_clear_window(data->mlx, data->win, (mlx_color){.rgba = 0x000000FF});
+	draw_every_point(data);
+	mlx_set_image_region(data->mlx, data->img.img, 0, 0, WIDTH, HEIGHT, data->img.pixels);
+	mlx_put_image_to_window(data->mlx, data->win, data->img.img, 0, 0);
+	ft_memcpy(data->old_key_table, data->key_table, sizeof(data->key_table));
+}
+
+int	main(int ac, char **av)
+{
+	t_data					*data;
+	mlx_window_create_info	info;
+
+	if (ac != 2)
+		ft_printf("./game_of_life <map>\n");
+	data = malloc(sizeof(t_data));
+	ft_memset(data, 0, sizeof(t_data));
+	ft_memset(&info, 0, sizeof(mlx_window_create_info));
+	if (!parse_map(av[1], data))
+	{
+		free_struct(data, 0);
+		ft_printf("Error from: %s\n", av[1]);
+		return (EXIT_FAILURE);
+	}
+	printf("Parsing finit ...\n");
+	create_window(data, &info);
+	mlx_set_fps_goal(data->mlx, 60);
+	mlx_on_event(data->mlx, data->win, MLX_KEYDOWN, key_hook, data->mlx);
+	mlx_on_event(data->mlx, data->win, MLX_KEYDOWN, key_down, data);
+	mlx_on_event(data->mlx, data->win, MLX_KEYUP, key_up, data);
+	mlx_on_event(data->mlx, data->win, MLX_WINDOW_EVENT,
+		window_hook, data->mlx);
+	mlx_add_loop_hook(data->mlx, update, data);
+	mlx_loop(data->mlx);
+	free_struct(data, 1);
+	return (0);
+}
