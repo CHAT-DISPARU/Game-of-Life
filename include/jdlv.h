@@ -6,7 +6,7 @@
 /*   By: titan <titan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/13 11:13:19 by gajanvie          #+#    #+#             */
-/*   Updated: 2025/12/19 18:43:19 by titan            ###   ########.fr       */
+/*   Updated: 2025/12/19 23:52:51 by titan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,5 +69,6 @@ void	set_bit(unsigned char **grid, int y, int x, int state);
 int		get_bit(t_data *data, int y, int x);
 void	free_grids_only(t_data *data);
 void	mouse_hook(int button, void *param);
+void	mouse_down(int button, void *param);
 
 #endif

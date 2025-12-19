@@ -6,7 +6,7 @@
 /*   By: titan <titan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 18:39:23 by titan             #+#    #+#             */
-/*   Updated: 2025/12/19 18:47:28 by titan            ###   ########.fr       */
+/*   Updated: 2025/12/19 23:55:17 by titan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,9 +75,9 @@ void mouse_hook(int button, void *param)
 	t_data *data = (t_data *)param;
 	int new_scale = data->img.pixel_scale;
 	int     mouse_x;
-    int     mouse_y;
+	int     mouse_y;
 
-    mlx_mouse_get_pos(data->mlx, &mouse_x, &mouse_y);
+	mlx_mouse_get_pos(data->mlx, &mouse_x, &mouse_y);
 	if (button == 1)
 		new_scale++;
 	else if (button == 2)
@@ -91,4 +91,33 @@ void mouse_hook(int button, void *param)
 		draw_every_point(data);
 		mlx_put_image_to_window(data->mlx, data->win, data->img.img, 0, 0);
 	}
+}
+
+void	toggle_cell(t_data *data)
+{
+	int	mouse_x;
+	int	mouse_y;
+	int	grid_x;
+	int	grid_y;
+	int	current_state;
+
+	mlx_mouse_get_pos(data->mlx, &mouse_x, &mouse_y);
+	grid_x = mouse_x / data->img.pixel_scale;
+	grid_y = mouse_y / data->img.pixel_scale;
+	if (grid_x >= 0 && grid_x < data->map.width &&
+		grid_y >= 0 && grid_y < data->map.height)
+	{
+		current_state = get_bit(data, grid_y, grid_x);
+		set_bit(data->map.grid, grid_y, grid_x, !current_state);
+		mlx_clear_window(data->mlx, data->win, (mlx_color){0});
+		draw_every_point(data);
+		mlx_put_image_to_window(data->mlx, data->win, data->img.img, 0, 0);
+	}
+}
+
+void	mouse_down(int button, void *param)
+{
+	t_data *data = (t_data *)param;
+	(void)button;
+	toggle_cell(data);
 }
