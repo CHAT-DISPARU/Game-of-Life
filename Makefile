@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: gajanvie <gajanvie@student.42.fr>          +#+  +:+       +#+         #
+#    By: titan <titan@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/11/13 12:35:12 by gajanvie          #+#    #+#              #
-#    Updated: 2025/12/19 15:42:41 by gajanvie         ###   ########.fr        #
+#    Updated: 2025/12/19 18:44:04 by titan            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -24,7 +24,8 @@ LIB = MacroLibX
 LIB_URL = https://github.com/seekrs/MacroLibX.git
 
 SRCS = $(SRCD)jdlv.c \
-		$(SRCD)draw_points.c
+		$(SRCD)draw_points.c \
+		$(SRCD)zoom.c
 
 OBJS = $(SRCS:$(SRCD)%.c=$(OBJDIR)%.o)
 

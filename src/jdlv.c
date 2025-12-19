@@ -3,14 +3,45 @@
 /*                                                        :::      ::::::::   */
 /*   jdlv.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gajanvie <gajanvie@student.42.fr>          +#+  +:+       +#+        */
+/*   By: titan <titan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/13 10:47:21 by gajanvie          #+#    #+#             */
-/*   Updated: 2025/12/19 17:39:35 by gajanvie         ###   ########.fr       */
+/*   Updated: 2025/12/19 18:43:32 by titan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <jdlv.h>
+
+void	free_grids_only(t_data *data)
+{
+    int	i;
+
+	i = 0;
+    if (data->map.grid)
+    {
+        while (i < data->map.height)
+        {
+            if (data->map.grid[i]) free(data->map.grid[i]);
+            if (data->map.next_grid[i]) free(data->map.next_grid[i]);
+            i++;
+        }
+        free(data->map.grid);
+        free(data->map.next_grid);
+    }
+}
+
+int	get_bit(t_data *data, int y, int x)
+{
+	return ((data->map.grid[y][x / 8] >> (x % 8)) & 1);
+}
+
+void	set_bit(unsigned char **grid, int y, int x, int state)
+{
+	if (state == 1)
+		grid[y][x / 8] |= (1 << (x % 8));
+	else
+		grid[y][x / 8] &= ~(1 << (x % 8));
+}
 
 void	create_window(t_data *data, mlx_window_create_info	*info)
 {
@@ -44,58 +75,55 @@ int	is_valid_line(char *line)
 
 int parse_map(char *filename, t_data *data)
 {
-    int     fd;
-    char    *line;
-    int     file_width;
-    int     file_height;
-    int     offset_x; 
-    int     offset_y;
-    int     i, j;
+	int     fd;
+	char    *line;
+	int     file_width;
+	int     file_height;
+	int     offset_x; 
+	int     offset_y;
+	int     i, j;
 
-    fd = open(filename, O_RDONLY);
-    if (fd < 0)
+	fd = open(filename, O_RDONLY);
+	if (fd < 0)
 		return (0);
-    line = get_next_line(fd, 0);
-    if (!line)
+	line = get_next_line(fd, 0);
+	if (!line)
 	{
 		close(fd);
 		return (0);
 	}
-    file_width = ft_strlen(line);
-    if (line[file_width - 1] == '\n')
+	file_width = ft_strlen(line);
+	if (line[file_width - 1] == '\n')
 		file_width--;
-    file_height = 0;
-    while (line)
-    {
-        int current_len = ft_strlen(line);
-        if (line[current_len - 1] == '\n')
+	file_height = 0;
+	while (line)
+	{
+		int current_len = ft_strlen(line);
+		if (line[current_len - 1] == '\n')
 			current_len--;
-        if (current_len != file_width || !is_valid_line(line))
-        {
-            free(line);
+		if (current_len != file_width || !is_valid_line(line))
+		{
+			free(line);
 			get_next_line(fd, 1);
 			close(fd);
 			return (0);
-        }
-        file_height++;
-        free(line);
-        line = get_next_line(fd, 0);
-    }
-    close(fd);
+		}
+		file_height++;
+		free(line);
+		line = get_next_line(fd, 0);
+	}
+	close(fd);
     data->map.width = WIDTH / SCALE;
     data->map.height = HEIGHT / SCALE;
-    if (file_width > data->map.width || file_height > data->map.height)
-    {
-        ft_printf("Erreur : La map du fichier est plus grande que l'écran !\n");
-        return (0);
-    }
-    data->map.grid = malloc(data->map.height * sizeof(int *));
-    data->map.next_grid = malloc(data->map.height * sizeof(int *));
+    data->map.byte_width = (data->map.width / 8) + 1;
+    data->map.grid = malloc(data->map.height * sizeof(unsigned char *));
+    data->map.next_grid = malloc(data->map.height * sizeof(unsigned char *));
+    
     i = 0;
     while (i < data->map.height)
     {
-        data->map.grid[i] = ft_calloc(data->map.width, sizeof(int));
-        data->map.next_grid[i] = ft_calloc(data->map.width, sizeof(int));
+        data->map.grid[i] = ft_calloc(data->map.byte_width, sizeof(unsigned char));
+        data->map.next_grid[i] = ft_calloc(data->map.byte_width, sizeof(unsigned char));
         i++;
     }
     offset_x = (data->map.width - file_width) / 2;
@@ -109,7 +137,7 @@ int parse_map(char *filename, t_data *data)
         while (i < file_width)
         {
             if (line[i] == '1')
-                data->map.grid[j + offset_y][i + offset_x] = 1;
+                set_bit(data->map.grid, j + offset_y, i + offset_x, 1);
             i++;
         }
         free(line);
@@ -217,6 +245,7 @@ int	main(int ac, char **av)
 	printf("Parsing finit ...\n");
 	create_window(data, &info);
 	mlx_set_fps_goal(data->mlx, 60);
+	mlx_on_event(data->mlx, data->win, MLX_MOUSEWHEEL, mouse_hook, data);
 	mlx_on_event(data->mlx, data->win, MLX_KEYDOWN, key_hook, data->mlx);
 	mlx_on_event(data->mlx, data->win, MLX_KEYDOWN, key_down, data);
 	mlx_on_event(data->mlx, data->win, MLX_KEYUP, key_up, data);

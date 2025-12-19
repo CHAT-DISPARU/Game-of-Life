@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   jdlv.h                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gajanvie <gajanvie@student.42.fr>          +#+  +:+       +#+        */
+/*   By: titan <titan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/13 11:13:19 by gajanvie          #+#    #+#             */
-/*   Updated: 2025/12/19 17:30:22 by gajanvie         ###   ########.fr       */
+/*   Updated: 2025/12/19 18:43:19 by titan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,10 +42,11 @@ typedef struct s_img
 
 typedef struct s_map
 {
-	int		**grid;
-	int		**next_grid;
-	int		width;
-	int		height;
+	unsigned char	**grid;
+	unsigned char	**next_grid;
+	int				width;
+	int				height;
+	int				byte_width;
 }				t_map;
 
 typedef struct s_data
@@ -58,11 +59,15 @@ typedef struct s_data
 	int			key_table[512];
 	int			old_key_table[512];
 	int			timer;
-    int			speed;
+	int			speed;
 	int			tor;
 }				t_data;
 
 void	draw_every_point(t_data *data);
 void	calculate_next_gen(t_data *data);
+void	set_bit(unsigned char **grid, int y, int x, int state);
+int		get_bit(t_data *data, int y, int x);
+void	free_grids_only(t_data *data);
+void	mouse_hook(int button, void *param);
 
 #endif
