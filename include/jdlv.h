@@ -1,0 +1,68 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   jdlv.h                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: gajanvie <gajanvie@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/11/13 11:13:19 by gajanvie          #+#    #+#             */
+/*   Updated: 2025/12/19 17:30:22 by gajanvie         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#ifndef JDLV_H
+# define JDLV_H
+
+# include <ft_printf.h>
+# include <libft.h>
+# include <get_next_line.h>
+# include <stdlib.h>
+# include <fcntl.h> 
+# include <errno.h>
+# include <stdlib.h>
+# include <sys/types.h>
+# include <sys/wait.h>
+# include <sys/time.h>
+# include <unistd.h>
+# include <stdio.h>
+# include <mlx.h>
+# include <math.h>
+# include <mlx_extended.h>
+
+# define WIDTH       1500
+# define HEIGHT      1000
+# define SCALE       10
+
+typedef struct s_img
+{
+	void		*img;
+	mlx_color	pixels[HEIGHT * WIDTH];
+	int     	pixel_scale;
+}				t_img;
+
+typedef struct s_map
+{
+	int		**grid;
+	int		**next_grid;
+	int		width;
+	int		height;
+}				t_map;
+
+typedef struct s_data
+{
+	mlx_context	mlx;
+	void		*win;
+	t_img		img;
+	t_map		map;
+	int			is_paused;
+	int			key_table[512];
+	int			old_key_table[512];
+	int			timer;
+    int			speed;
+	int			tor;
+}				t_data;
+
+void	draw_every_point(t_data *data);
+void	calculate_next_gen(t_data *data);
+
+#endif
