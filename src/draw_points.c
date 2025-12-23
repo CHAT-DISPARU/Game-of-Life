@@ -6,7 +6,7 @@
 /*   By: titan <titan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 15:37:09 by gajanvie          #+#    #+#             */
-/*   Updated: 2025/12/23 14:17:20 by titan            ###   ########.fr       */
+/*   Updated: 2025/12/23 22:57:45 by titan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,7 +54,7 @@ void	draw_every_point(t_data *data)
 				unsigned long hash = data->map.seed;
 				hash ^= (universe_x * 222222222222225UL);
 				hash ^= (universe_y * 404040404040407UL);
-				if (hash % 1000 == 0)
+				if (hash % 1001 == 0)
 					color = 0xFFFFFFFF;
 				else
 					color = 0x000000FF;
