@@ -6,7 +6,7 @@
 /*   By: titan <titan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/13 10:47:21 by gajanvie          #+#    #+#             */
-/*   Updated: 2025/12/23 14:08:58 by titan            ###   ########.fr       */
+/*   Updated: 2025/12/23 23:39:35 by titan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -304,6 +304,38 @@ void	clear_map(t_data *data)
 	mlx_put_image_to_window(data->mlx, data->win, data->img.img, 0, 0);
 }
 
+void	key_zoom(t_data *data)
+{
+	int	n;
+
+	if (data->map.zoom > 0)
+	{
+		n = 10 / data->map.zoom;
+		if (n == 0)
+			n = 1;
+		if (data->key_table[80] == 1)
+			data->map.cam_x -= n;
+		if (data->key_table[79] == 1)
+			data->map.cam_x += n;
+		if (data->key_table[82] == 1)
+			data->map.cam_y -= n;;
+		if (data->key_table[81] == 1)
+			data->map.cam_y += n;
+	}
+	else
+	{
+		n = -data->map.zoom;
+		if (data->key_table[80] == 1)
+			data->map.cam_x -= 3 * n;
+		if (data->key_table[79] == 1)
+			data->map.cam_x += 3 * n;
+		if (data->key_table[82] == 1)
+			data->map.cam_y -= 3 * n;;
+		if (data->key_table[81] == 1)
+			data->map.cam_y += 3 * n;	
+	}
+}
+
 void	update(void *param)
 {
 	t_data	*data;
@@ -313,6 +345,7 @@ void	update(void *param)
 		data->speed--;
 	if (data->key_table[45] == 1)
 		data->speed++;
+	key_zoom(data);
 	if (data->key_table[44] == 1 && data->old_key_table[44] != 1)
 	{
 		if (data->is_paused > 0){ft_printf("game paused\n");}
@@ -379,7 +412,7 @@ int	main(int ac, char **av)
 			return (EXIT_FAILURE);
 		}
 	}
-	printf("Parsing finit ...\n");
+	printf("Parsing finished ...\n");
 	create_window(data, &info);
 	mlx_set_fps_goal(data->mlx, 60);
 	mlx_on_event(data->mlx, data->win, MLX_MOUSEWHEEL, mouse_hook, data);
