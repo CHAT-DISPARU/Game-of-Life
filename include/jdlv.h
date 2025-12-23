@@ -6,7 +6,7 @@
 /*   By: titan <titan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/13 11:13:19 by gajanvie          #+#    #+#             */
-/*   Updated: 2025/12/19 23:52:51 by titan            ###   ########.fr       */
+/*   Updated: 2025/12/23 13:33:03 by titan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,10 +28,14 @@
 # include <mlx.h>
 # include <math.h>
 # include <mlx_extended.h>
+# include <pthread.h>
 
 # define WIDTH       1500
 # define HEIGHT      1000
 # define SCALE       10
+# define UNIVER_W  10000 
+# define UNIVER_H  5000
+# define THREADS_COUNT 8
 
 typedef struct s_img
 {
@@ -47,6 +51,9 @@ typedef struct s_map
 	int				width;
 	int				height;
 	int				byte_width;
+	long			cam_x;
+	long			cam_y;
+	int             zoom;
 }				t_map;
 
 typedef struct s_data
@@ -63,12 +70,25 @@ typedef struct s_data
 	int			tor;
 }				t_data;
 
+typedef struct s_thread_info
+{
+	t_data	*data;
+	int		start_y;
+	int		end_y;
+}				t_thread_info;
+
 void	draw_every_point(t_data *data);
 void	calculate_next_gen(t_data *data);
 void	set_bit(unsigned char **grid, int y, int x, int state);
-int		get_bit(t_data *data, int y, int x);
-void	free_grids_only(t_data *data);
+int		get_bit(t_map map, int y, int x);
+void	free_grids_only(t_map map);
 void	mouse_hook(int button, void *param);
 void	mouse_down(int button, void *param);
+void	save_map(t_map map);
+int		load_binary_map(char *filename, t_data *data);
+void	init_universe(t_data *data);
+int		count_neighbors(t_data *data, int y, int x);
+void	*thread_routine(void *arg);
+void	safe_close(int fd);
 
 #endif

@@ -6,33 +6,39 @@
 /*   By: titan <titan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/13 10:47:21 by gajanvie          #+#    #+#             */
-/*   Updated: 2025/12/20 00:19:11 by titan            ###   ########.fr       */
+/*   Updated: 2025/12/23 13:39:52 by titan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <jdlv.h>
 
-void	free_grids_only(t_data *data)
+void	safe_close(int fd)
+{
+	if (fd > 2)
+		close(fd);
+}
+
+void	free_grids_only(t_map map)
 {
 	int	i;
 
 	i = 0;
-	if (data->map.grid)
+	if (map.grid)
 	{
-		while (i < data->map.height)
+		while (i < map.height)
 		{
-			if (data->map.grid[i]) free(data->map.grid[i]);
-			if (data->map.next_grid[i]) free(data->map.next_grid[i]);
+			if (map.grid[i]) free(map.grid[i]);
+			if (map.next_grid[i]) free(map.next_grid[i]);
 			i++;
 		}
-		free(data->map.grid);
-		free(data->map.next_grid);
+		free(map.grid);
+		free(map.next_grid);
 	}
 }
 
-int	get_bit(t_data *data, int y, int x)
+int	get_bit(t_map map, int y, int x)
 {
-	return ((data->map.grid[y][x / 8] >> (x % 8)) & 1);
+	return ((map.grid[y][x / 8] >> (x % 8)) & 1);
 }
 
 void	set_bit(unsigned char **grid, int y, int x, int state)
@@ -73,15 +79,49 @@ int	is_valid_line(char *line)
 	return (1);
 }
 
-int parse_map(char *filename, t_data *data)
+int has_map_extension(char *filename)
 {
-	int     fd;
-	char    *line;
-	int     file_width;
-	int     file_height;
-	int     offset_x; 
-	int     offset_y;
-	int     i, j;
+	int len;
+
+	if (!filename)
+		return (0);
+	len = ft_strlen(filename);
+	if (len < 4)
+		return (0);
+	if (ft_strncmp(filename + len - 4, ".map", 4) == 0)
+		return (1);
+	return (0);
+}
+
+void	init_universe(t_data *data)
+{
+	int	y = 0;
+
+	data->map.width = UNIVER_W;
+	data->map.height = UNIVER_H;
+	data->map.byte_width = (UNIVER_W / 8) + 1;
+	data->map.grid = malloc(UNIVER_H * sizeof(unsigned char *));
+	data->map.next_grid = malloc(UNIVER_H * sizeof(unsigned char *));
+	while (y < UNIVER_H)
+	{
+		data->map.grid[y] = ft_calloc(data->map.byte_width, sizeof(unsigned char));
+		data->map.next_grid[y] = ft_calloc(data->map.byte_width, sizeof(unsigned char));
+		y++;
+	}
+	data->map.zoom = 10; 
+	data->map.cam_x = (UNIVER_W / 2) - ((WIDTH / data->map.zoom) / 2);
+	data->map.cam_y = (UNIVER_H / 2) - ((HEIGHT / data->map.zoom) / 2);
+}
+
+int	load_text_map(char *filename, t_data *data)
+{
+	int		fd;
+	char	*line;
+	int		file_width;
+	int		file_height;
+	int		offset_x; 
+	int		offset_y;
+	int		i, j;
 
 	if (filename)
 	{
@@ -91,7 +131,7 @@ int parse_map(char *filename, t_data *data)
 		line = get_next_line(fd, 0);
 		if (!line)
 		{
-			close(fd);
+			safe_close(fd);
 			return (0);
 		}
 		file_width = ft_strlen(line);
@@ -101,38 +141,25 @@ int parse_map(char *filename, t_data *data)
 		while (line)
 		{
 			int current_len = ft_strlen(line);
-			if (line[current_len - 1] == '\n')
-				current_len--;
+			if (line[current_len - 1] == '\n') current_len--;
 			if (current_len != file_width || !is_valid_line(line))
 			{
 				free(line);
 				get_next_line(fd, 1);
-				close(fd);
+				safe_close(fd);
 				return (0);
 			}
 			file_height++;
 			free(line);
 			line = get_next_line(fd, 0);
 		}
-		close(fd);
+		safe_close(fd);
 	}
-	data->map.width = WIDTH / SCALE;
-	data->map.height = HEIGHT / SCALE;
-	data->map.byte_width = (data->map.width / 8) + 1;
-	data->map.grid = malloc(data->map.height * sizeof(unsigned char *));
-	data->map.next_grid = malloc(data->map.height * sizeof(unsigned char *));
-	
-	i = 0;
-	while (i < data->map.height)
-	{
-		data->map.grid[i] = ft_calloc(data->map.byte_width, sizeof(unsigned char));
-		data->map.next_grid[i] = ft_calloc(data->map.byte_width, sizeof(unsigned char));
-		i++;
-	}
+	init_universe(data);
 	if (filename)
 	{
-		offset_x = (data->map.width - file_width) / 2;
-		offset_y = (data->map.height - file_height) / 2;
+		offset_x = (UNIVER_W - file_width) / 2;
+		offset_y = (UNIVER_H - file_height) / 2;
 		fd = open(filename, O_RDONLY);
 		line = get_next_line(fd, 0);
 		j = 0;
@@ -149,9 +176,17 @@ int parse_map(char *filename, t_data *data)
 			line = get_next_line(fd, 0);
 			j++;
 		}
-		close(fd);
+		safe_close(fd);
 	}
 	return (1);
+}
+
+int parse_map(char *filename, t_data *data)
+{
+	if (has_map_extension(filename))
+		return (load_binary_map(filename, data));
+	else
+		return (load_text_map(filename, data));
 }
 
 void free_struct(t_data *data, int j)
@@ -205,23 +240,41 @@ void	window_hook(int event, void *param)
 
 void	fill_random(t_data *data)
 {
-	int	fd;
-	int	y;
+	int		fd;
+	long	y;
+	long	start_x, end_x, start_y, end_y;
+	long	byte_start, byte_len;
 
 	fd = open("/dev/urandom", O_RDONLY);
-	if (fd < 0)
+	if (fd < 0) return ;
+	if (data->map.zoom > 0)
 	{
-		perror("Erreur ouverture urandom");
-		return;
+		start_x = data->map.cam_x;
+		start_y = data->map.cam_y;
+		end_x = start_x + (WIDTH / data->map.zoom);
+		end_y = start_y + (HEIGHT / data->map.zoom);
 	}
-	y = 0;
-	while (y < data->map.height)
+	else
 	{
-		if (read(fd, data->map.grid[y], data->map.byte_width) < 0)
-			break;
+		start_x = data->map.cam_x;
+		start_y = data->map.cam_y;
+		end_x = start_x + (WIDTH * -data->map.zoom);
+		end_y = start_y + (HEIGHT * -data->map.zoom);
+	}
+	if (start_x < 0) start_x = 0;
+	if (start_y < 0) start_y = 0;
+	if (end_x >= UNIVER_W) end_x = UNIVER_W;
+	if (end_y >= UNIVER_H) end_y = UNIVER_H;
+	byte_start = start_x / 8;
+	byte_len = (end_x - start_x) / 8;
+	if (byte_len <= 0) { safe_close(fd); return; }
+	y = start_y;
+	while (y < end_y)
+	{
+		read(fd, &data->map.grid[y][byte_start], byte_len);
 		y++;
 	}
-	close(fd);
+	safe_close(fd);
 	mlx_clear_window(data->mlx, data->win, (mlx_color){0});
 	draw_every_point(data);
 	mlx_put_image_to_window(data->mlx, data->win, data->img.img, 0, 0);
@@ -248,9 +301,9 @@ void	update(void *param)
 	t_data	*data;
 
 	data = (t_data *)param;
-	if (data->key_table[87] == 1 && data->speed > 1)
+	if (data->key_table[46] == 1 && data->speed > 1)
 		data->speed--;
-	if (data->key_table[86] == 1)
+	if (data->key_table[45] == 1)
 		data->speed++;
 	if (data->key_table[44] == 1 && data->old_key_table[44] != 1)
 	{
@@ -259,6 +312,12 @@ void	update(void *param)
 		data->is_paused = -data->is_paused;
 	}
 	if (data->key_table[22] == 1 && data->old_key_table[22] == 0)
+	{
+		ft_printf("\nsaving ...\n");
+		data->is_paused = -1;
+		save_map(data->map);
+	}
+	if (data->key_table[21] == 1 && data->old_key_table[21] == 0)
 		fill_random(data);
 	if (data->key_table[6] == 1 && data->old_key_table[6] == 0)
 		clear_map(data);

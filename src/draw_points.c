@@ -6,7 +6,7 @@
 /*   By: titan <titan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 15:37:09 by gajanvie          #+#    #+#             */
-/*   Updated: 2025/12/19 18:30:05 by titan            ###   ########.fr       */
+/*   Updated: 2025/12/23 13:39:55 by titan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,39 +14,41 @@
 
 void	draw_every_point(t_data *data)
 {
-	int	y_map;
-	int	x_map;
-	int	y_screen;
-	int	x_screen;
-	int	color;
+	int		screen_y = 0;
+	int		screen_x;
+	long	universe_x;
+	long	universe_y;
+	int		color;
 
-	y_map = 0;
-	while (y_map < data->map.height)
+	while (screen_y < HEIGHT)
 	{
-		x_map = 0;
-		while (x_map < data->map.width)
+		screen_x = 0;
+		while (screen_x < WIDTH)
 		{
-			if (get_bit(data, y_map, x_map) == 1)
-				color = 0xFFFFFFFF;
-			else
-				color = 0x000000FF;
-			int start_y = y_map * data->img.pixel_scale;
-			int start_x = x_map * data->img.pixel_scale;
-			y_screen = start_y;
-			while (y_screen < start_y + data->img.pixel_scale)
+			if (data->map.zoom > 0)
 			{
-				x_screen = start_x;
-				while (x_screen < start_x + data->img.pixel_scale)
-				{
-					if (x_screen < WIDTH && y_screen < HEIGHT)
-						data->img.pixels[y_screen * WIDTH + x_screen].rgba = color;
-					x_screen++;
-				}
-				y_screen++;
+				universe_x = data->map.cam_x + (screen_x / data->map.zoom);
+				universe_y = data->map.cam_y + (screen_y / data->map.zoom);
 			}
-			x_map++;
+			else
+			{
+				universe_x = data->map.cam_x + (screen_x * -data->map.zoom);
+				universe_y = data->map.cam_y + (screen_y * -data->map.zoom);
+			}
+			if (universe_x >= 0 && universe_x < UNIVER_W &&
+				universe_y >= 0 && universe_y < UNIVER_H)
+			{
+				if (get_bit(data->map, universe_y, universe_x))
+					color = 0xFFFFFFFF;
+				else
+					color = 0x000000FF;
+			}
+			else
+				color = 0x222222FF;
+			data->img.pixels[screen_y * WIDTH + screen_x].rgba = color;
+			screen_x++;
 		}
-		y_map++;
+		screen_y++;
 	}
 }
 
@@ -81,7 +83,7 @@ int	count_neighbors(t_data *data, int y, int x)
 			if (row >= 0 && row < data->map.height && 
 				col >= 0 && col < data->map.width)
 			{
-				if (get_bit(data, row, col) == 1)
+				if (get_bit(data->map, row, col) == 1)
 					count++;
 			}
 			j++;
@@ -93,30 +95,31 @@ int	count_neighbors(t_data *data, int y, int x)
 
 void	calculate_next_gen(t_data *data)
 {
-	int				y;
-	int				x;
-	int				autour;
+	pthread_t		threads[THREADS_COUNT];
+	t_thread_info	infos[THREADS_COUNT];
+	int				i;
+	int				slice_height;
 	unsigned char	**tmp;
-	int				state;
 
-	y = 0;
-	while (y < data->map.height)
+	slice_height = data->map.height / THREADS_COUNT;
+	i = 0;
+	while (i < THREADS_COUNT)
 	{
-		x = 0;
-		while (x < data->map.width)
-		{
-			autour = count_neighbors(data, y, x);
-			state = get_bit(data, y, x);
-			if (state == 0 && autour == 3)
-				set_bit(data->map.next_grid, y, x, 1);
-			else if (state == 1 && (autour < 2 || autour > 3))
-				set_bit(data->map.next_grid, y, x, 0);
-			else
-				set_bit(data->map.next_grid, y, x, state);
-
-			x++;
-		}
-		y++;
+		infos[i].data = data;
+		infos[i].start_y = i * slice_height;
+		if (i == THREADS_COUNT - 1)
+			infos[i].end_y = data->map.height;
+		else
+			infos[i].end_y = (i + 1) * slice_height;
+		if (pthread_create(&threads[i], NULL, thread_routine, &infos[i]) != 0)
+			return ;
+		i++;
+	}
+	i = 0;
+	while (i < THREADS_COUNT)
+	{
+		pthread_join(threads[i], NULL);
+		i++;
 	}
 	tmp = data->map.grid;
 	data->map.grid = data->map.next_grid;

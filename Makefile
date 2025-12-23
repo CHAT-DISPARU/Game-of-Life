@@ -6,7 +6,7 @@
 #    By: titan <titan@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/11/13 12:35:12 by gajanvie          #+#    #+#              #
-#    Updated: 2025/12/19 18:44:04 by titan            ###   ########.fr        #
+#    Updated: 2025/12/23 13:36:33 by titan            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -25,13 +25,16 @@ LIB_URL = https://github.com/seekrs/MacroLibX.git
 
 SRCS = $(SRCD)jdlv.c \
 		$(SRCD)draw_points.c \
+		$(SRCD)save_map.c \
+		$(SRCD)load_binary.c \
+		$(SRCD)routine.c \
 		$(SRCD)zoom.c
 
 OBJS = $(SRCS:$(SRCD)%.c=$(OBJDIR)%.o)
 
 CC = clang
 RM = rm -f
-CFLAGS = -Wall -Wextra -Werror -g -I ./include
+CFLAGS = -Wall -Wextra -Werror -g -O3 -I ./include
 MLX_DIR = MacroLibX
 MLX = $(MLX_DIR)/libmlx.so
 
