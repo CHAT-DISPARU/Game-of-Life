@@ -6,7 +6,7 @@
 /*   By: titan <titan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/13 10:47:21 by gajanvie          #+#    #+#             */
-/*   Updated: 2025/12/23 23:39:35 by titan            ###   ########.fr       */
+/*   Updated: 2025/12/23 23:45:12 by titan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -304,7 +304,7 @@ void	clear_map(t_data *data)
 	mlx_put_image_to_window(data->mlx, data->win, data->img.img, 0, 0);
 }
 
-void	key_zoom(t_data *data)
+void	key_move(t_data *data)
 {
 	int	n;
 
@@ -313,27 +313,17 @@ void	key_zoom(t_data *data)
 		n = 10 / data->map.zoom;
 		if (n == 0)
 			n = 1;
-		if (data->key_table[80] == 1)
-			data->map.cam_x -= n;
-		if (data->key_table[79] == 1)
-			data->map.cam_x += n;
-		if (data->key_table[82] == 1)
-			data->map.cam_y -= n;;
-		if (data->key_table[81] == 1)
-			data->map.cam_y += n;
 	}
 	else
-	{
-		n = -data->map.zoom;
-		if (data->key_table[80] == 1)
-			data->map.cam_x -= 3 * n;
-		if (data->key_table[79] == 1)
-			data->map.cam_x += 3 * n;
-		if (data->key_table[82] == 1)
-			data->map.cam_y -= 3 * n;;
-		if (data->key_table[81] == 1)
-			data->map.cam_y += 3 * n;	
-	}
+		n = 3 * -data->map.zoom;
+	if (data->key_table[80] == 1)
+		data->map.cam_x -= n;
+	if (data->key_table[79] == 1)
+		data->map.cam_x += n;
+	if (data->key_table[82] == 1)
+		data->map.cam_y -= n;;
+	if (data->key_table[81] == 1)
+		data->map.cam_y += n;	
 }
 
 void	update(void *param)
@@ -345,7 +335,7 @@ void	update(void *param)
 		data->speed--;
 	if (data->key_table[45] == 1)
 		data->speed++;
-	key_zoom(data);
+	key_move(data);
 	if (data->key_table[44] == 1 && data->old_key_table[44] != 1)
 	{
 		if (data->is_paused > 0){ft_printf("game paused\n");}
