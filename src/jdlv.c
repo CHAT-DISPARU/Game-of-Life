@@ -6,7 +6,7 @@
 /*   By: titan <titan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/13 10:47:21 by gajanvie          #+#    #+#             */
-/*   Updated: 2025/12/23 13:39:52 by titan            ###   ########.fr       */
+/*   Updated: 2025/12/23 14:08:58 by titan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,6 +102,14 @@ void	init_universe(t_data *data)
 	data->map.byte_width = (UNIVER_W / 8) + 1;
 	data->map.grid = malloc(UNIVER_H * sizeof(unsigned char *));
 	data->map.next_grid = malloc(UNIVER_H * sizeof(unsigned char *));
+	int fd = open("/dev/urandom", O_RDONLY);
+	if (fd >= 0)
+	{
+		read(fd, &data->map.seed, sizeof(unsigned long));
+		close(fd);
+	}
+	else
+		data->map.seed = 123456789;
 	while (y < UNIVER_H)
 	{
 		data->map.grid[y] = ft_calloc(data->map.byte_width, sizeof(unsigned char));

@@ -6,12 +6,11 @@
 /*   By: titan <titan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/23 12:50:29 by titan             #+#    #+#             */
-/*   Updated: 2025/12/23 13:39:44 by titan            ###   ########.fr       */
+/*   Updated: 2025/12/23 13:53:23 by titan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <jdlv.h>
-# define GET_BIT_FAST(byte, bit) ((byte >> bit) & 1)
 
 void *thread_routine(void *arg)
 {
@@ -28,8 +27,10 @@ void *thread_routine(void *arg)
 
 	while (y < info->end_y)
 	{
-		if (y == 0 || y == data->map.height - 1) {
-			y++; continue; 
+		if (y == 0 || y == data->map.height - 1)
+		{
+			y++;
+			continue ; 
 		}
 
 		row_top = data->map.grid[y - 1];
@@ -47,15 +48,17 @@ void *thread_routine(void *arg)
 				{
 					row_next[byte_x] = 0; 
 					byte_x++;
-					continue;
+					continue ;
 				}
 			}
 			bit = 0;
 			while (bit < 8)
 			{
 				global_x = byte_x * 8 + bit;
-				if (global_x == 0 || global_x >= data->map.width - 1) {
-					bit++; continue;
+				if (global_x == 0 || global_x >= data->map.width - 1)
+				{
+					bit++;
+					continue ;
 				}
 				int count = 0;
 				count = count_neighbors(data, y, global_x);

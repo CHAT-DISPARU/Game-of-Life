@@ -6,7 +6,7 @@
 /*   By: titan <titan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 15:37:09 by gajanvie          #+#    #+#             */
-/*   Updated: 2025/12/23 13:39:55 by titan            ###   ########.fr       */
+/*   Updated: 2025/12/23 14:17:20 by titan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@ void	draw_every_point(t_data *data)
 	long	universe_x;
 	long	universe_y;
 	int		color;
+	int 	border_size = 50;
 
 	while (screen_y < HEIGHT)
 	{
@@ -43,8 +44,21 @@ void	draw_every_point(t_data *data)
 				else
 					color = 0x000000FF;
 			}
+			else if (universe_x >= -border_size && universe_x < UNIVER_W + border_size &&
+					 universe_y >= -border_size && universe_y < UNIVER_H + border_size)
+			{
+				color = 0x444444FF;
+			}
 			else
-				color = 0x222222FF;
+			{
+				unsigned long hash = data->map.seed;
+				hash ^= (universe_x * 222222222222225UL);
+				hash ^= (universe_y * 404040404040407UL);
+				if (hash % 1000 == 0)
+					color = 0xFFFFFFFF;
+				else
+					color = 0x000000FF;
+			}
 			data->img.pixels[screen_y * WIDTH + screen_x].rgba = color;
 			screen_x++;
 		}

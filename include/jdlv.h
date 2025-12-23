@@ -6,7 +6,7 @@
 /*   By: titan <titan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/13 11:13:19 by gajanvie          #+#    #+#             */
-/*   Updated: 2025/12/23 13:33:03 by titan            ###   ########.fr       */
+/*   Updated: 2025/12/23 14:08:16 by titan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@
 # define SCALE       10
 # define UNIVER_W  10000 
 # define UNIVER_H  5000
-# define THREADS_COUNT 8
+# define THREADS_COUNT 12
 
 typedef struct s_img
 {
@@ -54,6 +54,7 @@ typedef struct s_map
 	long			cam_x;
 	long			cam_y;
 	int             zoom;
+	unsigned long	seed;
 }				t_map;
 
 typedef struct s_data
