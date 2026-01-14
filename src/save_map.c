@@ -6,20 +6,41 @@
 /*   By: titan <titan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/21 12:39:18 by titan             #+#    #+#             */
-/*   Updated: 2025/12/23 13:39:39 by titan            ###   ########.fr       */
+/*   Updated: 2025/12/24 17:26:32 by titan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <jdlv.h>
+
+int	is_row_real_empty(unsigned char *row, int byte_width)
+{
+	int i = 0;
+
+	while (i < byte_width - 8)
+	{
+		if (*(uint64_t*)&row[i] != 0)
+			return (0);
+		i += 8;
+	}
+	while (i < byte_width)
+	{
+		if (row[i] != 0)
+			return (0);
+		i++;
+	}
+	return (1);
+}
 
 void	save_map(t_map map)
 {
 	int		r;
 	char	s;
 	char	*result;
+	char	*result_total;
 	int		i = 0;
 	int		y = 0;
 	int		fd;
+	int		marker = -1;
 
 	ft_putstr_fd("\nname of the save : ", 1);
 	result = NULL;
@@ -53,10 +74,14 @@ void	save_map(t_map map)
 			if (!result)
 				return (perror("Malloc fail :"));
 			ft_strlcat(result, ".map", ft_strlen(result) + 5);
-			fd = open(result, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+			result_total = ft_strjoin("maps/", result);
+			free(result);
+			if (!result_total)
+				return (perror("Malloc fail :"));
+			fd = open(result_total, O_CREAT | O_WRONLY | O_TRUNC, 0644);
 			if (fd < 0)
 			{
-				free(result);
+				free(result_total);
 				perror("Open fail : ");
 				return ;
 			}
@@ -66,10 +91,15 @@ void	save_map(t_map map)
 			write(fd, &h, sizeof(int));
 			while (y < UNIVER_H)
 			{
-				write(fd, map.grid[y], map.byte_width);
+				if (!is_row_real_empty(map.grid[y], map.byte_width))
+				{
+					write(fd, &y, sizeof(int));
+					write(fd, map.grid[y], map.byte_width);
+				}
 				y++;
 			}
-			free(result);
+			write(fd, &marker, sizeof(int));
+			free(result_total);
 			safe_close(fd);
 			ft_printf("file saved\ngame running...\n");
 			return ;

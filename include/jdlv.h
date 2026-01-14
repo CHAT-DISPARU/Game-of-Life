@@ -6,7 +6,7 @@
 /*   By: titan <titan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/13 11:13:19 by gajanvie          #+#    #+#             */
-/*   Updated: 2025/12/23 14:08:16 by titan            ###   ########.fr       */
+/*   Updated: 2025/12/25 16:44:54 by titan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,8 +33,8 @@
 # define WIDTH       1500
 # define HEIGHT      1000
 # define SCALE       10
-# define UNIVER_W  10000 
-# define UNIVER_H  5000
+# define UNIVER_W  100000
+# define UNIVER_H  50000
 # define THREADS_COUNT 12
 
 typedef struct s_img
@@ -55,6 +55,10 @@ typedef struct s_map
 	long			cam_y;
 	int             zoom;
 	unsigned long	seed;
+	int				*row_empty;
+    int				*next_row_empty;
+    unsigned char	*grid_memory;
+    unsigned char	*next_grid_memory;
 }				t_map;
 
 typedef struct s_data
@@ -69,6 +73,7 @@ typedef struct s_data
 	int			timer;
 	int			speed;
 	int			tor;
+	int			shift;
 }				t_data;
 
 typedef struct s_thread_info
@@ -80,7 +85,7 @@ typedef struct s_thread_info
 
 void	draw_every_point(t_data *data);
 void	calculate_next_gen(t_data *data);
-void	set_bit(unsigned char **grid, int y, int x, int state);
+void	set_bit(t_data *data, int y, int x, int state);
 int		get_bit(t_map map, int y, int x);
 void	free_grids_only(t_map map);
 void	mouse_hook(int button, void *param);
