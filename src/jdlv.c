@@ -6,7 +6,7 @@
 /*   By: titan <titan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/13 10:47:21 by gajanvie          #+#    #+#             */
-/*   Updated: 2025/12/23 23:45:12 by titan            ###   ########.fr       */
+/*   Updated: 2025/12/24 17:37:13 by titan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,12 +41,17 @@ int	get_bit(t_map map, int y, int x)
 	return ((map.grid[y][x / 8] >> (x % 8)) & 1);
 }
 
-void	set_bit(unsigned char **grid, int y, int x, int state)
+void	set_bit(t_data *data, int y, int x, int state)
 {
+	if (y < 0 || y >= data->map.height || x < 0 || x >= data->map.width)
+		return ;
 	if (state == 1)
-		grid[y][x / 8] |= (1 << (x % 8));
+	{
+		data->map.grid[y][x / 8] |= (1 << (x % 8));
+		data->map.row_empty[y] = 0; 
+	}
 	else
-		grid[y][x / 8] &= ~(1 << (x % 8));
+		data->map.grid[y][x / 8] &= ~(1 << (x % 8));
 }
 
 void	create_window(t_data *data, mlx_window_create_info	*info)
@@ -72,7 +77,7 @@ int	is_valid_line(char *line)
 	i = 0;
 	while (line[i] && line[i] != '\n')
 	{
-		if (line[i] != '0' && line[i] != '1')
+		if (line[i] != '0' && line[i] != '1' && line[i] != '.' && line[i] != 'O')
 			return (0);
 		i++;
 	}
@@ -102,6 +107,11 @@ void	init_universe(t_data *data)
 	data->map.byte_width = (UNIVER_W / 8) + 1;
 	data->map.grid = malloc(UNIVER_H * sizeof(unsigned char *));
 	data->map.next_grid = malloc(UNIVER_H * sizeof(unsigned char *));
+	size_t total_size = (size_t)UNIVER_H * (size_t)data->map.byte_width;
+	data->map.grid_memory = ft_calloc(total_size, sizeof(unsigned char));
+	data->map.next_grid_memory = ft_calloc(total_size, sizeof(unsigned char));
+	data->map.row_empty = malloc(UNIVER_H * sizeof(int));
+	data->map.next_row_empty = malloc(UNIVER_H * sizeof(int));
 	int fd = open("/dev/urandom", O_RDONLY);
 	if (fd >= 0)
 	{
@@ -112,8 +122,10 @@ void	init_universe(t_data *data)
 		data->map.seed = 123456789;
 	while (y < UNIVER_H)
 	{
-		data->map.grid[y] = ft_calloc(data->map.byte_width, sizeof(unsigned char));
-		data->map.next_grid[y] = ft_calloc(data->map.byte_width, sizeof(unsigned char));
+		data->map.grid[y] = &data->map.grid_memory[y * data->map.byte_width];
+		data->map.next_grid[y] = &data->map.next_grid_memory[y * data->map.byte_width];
+		data->map.row_empty[y] = 1;
+		data->map.next_row_empty[y] = 1;
 		y++;
 	}
 	data->map.zoom = 10; 
@@ -176,8 +188,8 @@ int	load_text_map(char *filename, t_data *data)
 			i = 0;
 			while (i < file_width)
 			{
-				if (line[i] == '1')
-					set_bit(data->map.grid, j + offset_y, i + offset_x, 1);
+				if (line[i] == '1' || line[i] == 'O')
+					set_bit(data, j + offset_y, i + offset_x, 1);
 				i++;
 			}
 			free(line);
@@ -199,15 +211,18 @@ int parse_map(char *filename, t_data *data)
 
 void free_struct(t_data *data, int j)
 {
-	int i = 0;
-	while (i < data->map.height)
-	{
-		free(data->map.grid[i]);
-		free(data->map.next_grid[i]);
-		i++;
-	}
-	free(data->map.grid);
-	free(data->map.next_grid);
+	if (data->map.grid_memory)
+		free(data->map.grid_memory);
+	if (data->map.next_grid_memory)
+		free(data->map.next_grid_memory);
+	if (data->map.grid)
+		free(data->map.grid);
+	if (data->map.next_grid)
+		free(data->map.next_grid);
+	if (data->map.row_empty)
+		free(data->map.row_empty);
+	if (data->map.next_row_empty)
+		free(data->map.next_row_empty);
 	if (j)
 	{
 		mlx_destroy_image(data->mlx, data->img.img);
@@ -280,6 +295,7 @@ void	fill_random(t_data *data)
 	while (y < end_y)
 	{
 		read(fd, &data->map.grid[y][byte_start], byte_len);
+		data->map.row_empty[y] = 0;
 		y++;
 	}
 	safe_close(fd);
@@ -310,12 +326,14 @@ void	key_move(t_data *data)
 
 	if (data->map.zoom > 0)
 	{
-		n = 10 / data->map.zoom;
+		n = 20 / data->map.zoom;
 		if (n == 0)
 			n = 1;
 	}
 	else
-		n = 3 * -data->map.zoom;
+		n = 5 * -data->map.zoom;
+	if (data->shift > 0)
+		n = n * 5;
 	if (data->key_table[80] == 1)
 		data->map.cam_x -= n;
 	if (data->key_table[79] == 1)
@@ -335,6 +353,10 @@ void	update(void *param)
 		data->speed--;
 	if (data->key_table[45] == 1)
 		data->speed++;
+	if (data->key_table[225] == 1)
+		data->shift = 1;
+	if (data->key_table[225] == 0)
+		data->shift = 0;
 	key_move(data);
 	if (data->key_table[44] == 1 && data->old_key_table[44] != 1)
 	{
@@ -352,12 +374,6 @@ void	update(void *param)
 		fill_random(data);
 	if (data->key_table[6] == 1 && data->old_key_table[6] == 0)
 		clear_map(data);
-	if (data->key_table[23] == 1 && data->old_key_table[23] != 1)
-	{
-		if (data->tor > 0){ft_printf("tor disabled\n");}
-		if (data->tor < 0){ft_printf("tor enabled\n");}
-		data->tor = -data->tor;
-	}
 	if (data->is_paused > 0)
 	{
 		data->timer++;

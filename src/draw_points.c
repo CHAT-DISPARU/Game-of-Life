@@ -6,7 +6,7 @@
 /*   By: titan <titan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/19 15:37:09 by gajanvie          #+#    #+#             */
-/*   Updated: 2025/12/23 22:57:45 by titan            ###   ########.fr       */
+/*   Updated: 2025/12/24 16:53:58 by titan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,8 @@ void	draw_every_point(t_data *data)
 			else if (universe_x >= -border_size && universe_x < UNIVER_W + border_size &&
 					 universe_y >= -border_size && universe_y < UNIVER_H + border_size)
 			{
-				color = 0x444444FF;
+				//color = 0x444444FF;
+				color = 0x000000FF;
 			}
 			else
 			{
@@ -89,11 +90,6 @@ int	count_neighbors(t_data *data, int y, int x)
 			}
 			row = y + i;
 			col = x + j;
-			if (data->tor == 1)
-			{
-				row = (y + i + data->map.height) % data->map.height;
-				col = (x + j + data->map.width) % data->map.width;
-			}
 			if (row >= 0 && row < data->map.height && 
 				col >= 0 && col < data->map.width)
 			{
@@ -114,6 +110,7 @@ void	calculate_next_gen(t_data *data)
 	int				i;
 	int				slice_height;
 	unsigned char	**tmp;
+	int				*tmp_row_empty;
 
 	slice_height = data->map.height / THREADS_COUNT;
 	i = 0;
@@ -138,4 +135,7 @@ void	calculate_next_gen(t_data *data)
 	tmp = data->map.grid;
 	data->map.grid = data->map.next_grid;
 	data->map.next_grid = tmp;
+	tmp_row_empty = data->map.row_empty;
+	data->map.row_empty = data->map.next_row_empty;
+	data->map.next_row_empty = tmp_row_empty;
 }

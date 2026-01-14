@@ -6,21 +6,22 @@
 /*   By: titan <titan@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/23 11:37:44 by titan             #+#    #+#             */
-/*   Updated: 2025/12/23 23:21:48 by titan            ###   ########.fr       */
+/*   Updated: 2025/12/24 16:51:30 by titan            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <jdlv.h>
 
-int load_binary_map(char *filename, t_data *data)
+int	load_binary_map(char *filename, t_data *data)
 {
-	int             fd;
-	int             file_width;
-	int             file_height;
-	int             file_byte_width;
-	int             offset_x;
-	int             offset_y;
-	int             x, y;
+	int				fd;
+	int				file_width;
+	int				file_height;
+	int				file_byte_width;
+	int				offset_x;
+	int				offset_y;
+	int				x;
+	int				current_y;
 	unsigned char   *buffer;
 
 	fd = open(filename, O_RDONLY);
@@ -43,26 +44,21 @@ int load_binary_map(char *filename, t_data *data)
 		return (ft_printf("Erreur: Malloc \n"), 0);
 	}
 
-	y = 0;
-	while (y < file_height)
+	while (1)
 	{
+		if (read(fd, &current_y, sizeof(int)) != sizeof(int))
+			break;
+		if (current_y == -1)
+			break;
 		if (read(fd, buffer, file_byte_width) != file_byte_width)
-		{
-			free(buffer);
-			safe_close(fd);
-			return (ft_printf("Erreur: read %d\n", y), 0);
-		}
+			break;
 		x = 0;
 		while (x < file_width)
 		{
 			if ((buffer[x / 8] >> (x % 8)) & 1)
-			{
-				if (y + offset_y < UNIVER_H && x + offset_x < UNIVER_W)
-					set_bit(data->map.grid, y + offset_y, x + offset_x, 1);
-			}
+				set_bit(data, current_y + offset_y, x + offset_x, 1);
 			x++;
 		}
-		y++;
 	}
 	free(buffer);
 	safe_close(fd);
